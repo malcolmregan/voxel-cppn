@@ -19,9 +19,13 @@ import theano.tensor as T
 import theano.sandbox.cuda.basic_ops as sbcuda
 import lasagne
 
-# import sys
-# sys.path.insert(0, 'C:\Users\Andy\Generative-and-Discriminative-Voxel-Modeling')
-from utils import checkpoints, metrics_logging
+import sys
+# sys.path.insert(0, 'C:/Users/p2admin/documents/max/projects/voxel-cppn')
+sys.path.append('C:/Users/p2admin/documents/max/projects/voxel-cppn')
+import imp
+checkpoints = imp.load_source('utils', 'C:/Users/p2admin/documents/max/projects/voxel-cppn/vrn/utils/checkpoints.py')
+metrics_logging = imp.load_source('utils', 'C:/Users/p2admin/documents/max/projects/voxel-cppn/vrn/utils/metrics_logging.py')
+# from utils import checkpoints, metrics_logging
 from collections import OrderedDict
 import matplotlib
 
