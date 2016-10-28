@@ -31,7 +31,7 @@ def make_testing_functions(model, category_id):
     X = T.TensorType('float32', [False]*5)('X')
 
     # Get output
-    obj = T.sum(lasagne.layers.get_output(model['l_out'], X, deterministic=True), axis=0)
+    obj = T.sum(lasagne.layers.get_output(model['l_out'], X, deterministic=True), axis=0)[category_id]
 
     # Compile Functions
     obj_fun = theano.function([X], obj)
