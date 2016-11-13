@@ -1,24 +1,35 @@
 from __future__ import print_function
 import random
+import argparse
+import imp
+import time
+import logging
+import math
+import os
 
 import numpy as np
+from path import Path
 import theano
 import theano.tensor as T
 import theano.sandbox.cuda.basic_ops as sbcuda
 import lasagne
 
 import sys
-
 import os
+
 from neat import nn, population, statistics
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.join(sys.path[0],'VRN'))
+
+from utils import checkpoints
+from utils import metrics_logging
 import imp
-sys.path.append('/home/p2admin/Documents/Malcolm/voxel-cppn')
-# from utils import checkpoints, metrics_logging
-checkpoints = imp.load_source('utils', '/home/p2admin/Documents/Malcolm/voxel-cppn/VRN/utils/checkpoints.py')
-metrics_logging = imp.load_source('utils', '/home/p2admin/Documents/Malcolm/voxel-cppn/VRN/utils/metrics_logging.py')
-config_path = '/home/p2admin/Documents/Malcolm/voxel-cppn/VRN/Discriminative/VRN.py'
-data_path = '/home/p2admin/Documents/Malcolm/voxel-cppn/VRN/datasets/modelnet40_rot_test.npz'
+
+from collections import OrderedDict
+import matplotlib
+
+np.set_printoptions(threshold=np.nan)
 
 # Define the testing functions
 def make_testing_functions(model, category_id):
@@ -31,11 +42,13 @@ def make_testing_functions(model, category_id):
 	return obj_fun
 
 # Load config module
-config_module = imp.load_source('config', config_path)
+basepath=str(os.path.dirname(os.path.realpath(__file__)))
+configure_path = basepath+'/VRN/Discriminative/VRN.py'
+config_module = imp.load_source('config', configure_path)
 cfg = config_module.cfg
 
 # Find weights 
-fileweights_fname = str(config_path)[:-3] + '.npz'
+fileweights_fname = str(configure_path)[:-3] + '.npz'
 
 # Get Model
 model = config_module.get_model()
@@ -44,35 +57,35 @@ model = config_module.get_model()
 print('Compiling theano functions...')
 obj_fun = make_testing_functions(model=model, category_id=0)
 
-# Prepare data
-X = np.random.randint(low=0, high=1, size=(1,1,32,32,32)).astype('float32')*4.0-1.0
+#CPPN
+#make x, y, and z vectors of 100 elements with values between 0 and 31
+#input=[x,y,z]
 
-############
-### CPPN ###
-############
+input = [[16, 16, 16],[16,16,19],[16,16,13],[16,19,16],[16,13,16],[13,16,16],[19,16,16]]
 
-input = [[[0 for k in xrange(32)] for j in xrange(32)] for i in xrange(32)] 
-for i in xrange(100):
-    x=random.randrange(0,32,1) 
-    y=random.randrange(0,32,1) 
-    z=random.randrange(0,32,1) 
-    input[x][y][z] = 1
-
+threshold = 1 
 def eval_fitness(genomes):
     for g in genomes:
-        net = nn.create_feed_forward_phenotype(g)
-        output = net.serial_activate(input)
-        outputarray = np.asarray(output)
-        outputarray = np.reshape(outputarray,(32,32,32))
-        # outputarray = outputarray>.5 ### Make binary array
-        temp = np.zeros((1,1,32,32,32),dtype=np.uint8)
-        temp[0,0,:,:,:] = outputarray
-        g.fitness = obj_fun(temp)
+	net = nn.create_feed_forward_phenotype(g)
+	for inputs in input:
+	    output = net.serial_activate(inputs)        
+            outputarray = np.asarray(output)
+            outputarray = np.reshape(outputarray,(32,32,32))
+            outputarray[outputarray<threshold]=-1
+            outputarray[outputarray>=threshold]=3
+            #print(outputarray[20,20,:])
+            temp = np.zeros((1,1,32,32,32),dtype=np.uint8)
+            temp[0,0,:,:,:] = outputarray
+            temp=temp.astype('float32') 
+	        pred=obj_fun(temp)
+            pred=float(pred)
+            #print(pred)
+            g.fitness = pred
 
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
 pop = population.Population(config_path)
-pop.run(eval_fitness, 4)
+pop.run(eval_fitness, 200)
 
 print('Number of evaluations: {0}'.format(pop.total_evaluations))
 

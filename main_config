@@ -3,18 +3,18 @@ stagnation_type      = DefaultStagnation
 reproduction_type    = DefaultReproduction
 
 [phenotype]
-input_nodes          = 32 		
-hidden_nodes         = 5
+input_nodes          = 3 		
+hidden_nodes         = 2
 output_nodes         = 32768
-initial_connection   = unconnected	
+initial_connection   = fs_neat	
 max_weight           = 30		
 min_weight           = -30
 feedforward          = 1
-activation_functions = abs clamped exp gauss hat identity inv log relu sigmoid sin tanh
+activation_functions = gauss sigmoid sin tanh
 weight_stdev         = 1.0
 
 [genetic]
-pop_size                = 2
+pop_size                = 10
 max_fitness_threshold   = 0.95
 prob_add_conn           = 0.988
 prob_add_node           = 0.085
@@ -27,9 +27,9 @@ response_mutation_power = 0.1
 prob_mutate_weight      = 0.460
 prob_replace_weight     = 0.0245
 weight_mutation_power   = 0.825
-prob_mutate_activation  = 0.0
+prob_mutate_activation  = 0.05
 prob_toggle_link        = 0.0138
-reset_on_extinction     = 0
+reset_on_extinction     = 1
 
 [genotype compatibility]
 compatibility_threshold = 3.0
@@ -39,7 +39,7 @@ weight_coefficient      = 0.4
 
 [DefaultStagnation]
 species_fitness_func = mean
-max_stagnation       = 5
+max_stagnation       = 10
 
 [DefaultReproduction]
 elitism              = 1
