@@ -26,15 +26,23 @@ import matplotlib
 
 
 # Define the testing functions
-def make_testing_functions(model, category_id):
+def make_testing_functions():
     # Input Array
-    X = T.TensorType('float32', [False]*5)('X')
+    X = T.TensorType('float32', [False] * 5)('X')
+
+    # # Shared Variable for input array
+    # X_shared = lasagne.utils.shared_empty(5, dtype='float32')
+
+    # Output layer
+    l_out = model['l_out']
 
     # Get output
-    obj = T.sum(lasagne.layers.get_output(model['l_out'], X, deterministic=True), axis=0)[category_id]
+    y_hat_deterministic = lasagne.layers.get_output(l_out, X, deterministic=True)
+
+    prob = T.sum(y_hat_deterministic, axis=0)
 
     # Compile Functions
-    obj_fun = theano.function([X], obj)
+    obj_fun = theano.function([X], [prob])
 
     return obj_fun
 
@@ -49,21 +57,25 @@ cfg = config_module.cfg
 weights_fname = str(config_path)[:-3] + '.npz'
 # Get Model
 model = config_module.get_model()
+# Load weights
+metadata = checkpoints.load_weights(weights_fname, model['l_out']) # model weights changed after this...inside load_weights, another model file is read from weights_fname
 
 # Compile functions
 print('Compiling theano functions...')
-obj_fun = make_testing_functions(model=model, category_id=0)
+# category_id=0
+obj_fun = make_testing_functions()
 
 # Prepare data
 data=np.load(data_path)
 feat=data['features']
-X= np.zeros((1,1,32,32,32),dtype=np.float32)
-ex=feat[1]
-ex[ex==0]=-1. 
-ex[ex==1]=3.
-ex[:,0,0,0]=0.
-X[0,:,:,:,:]=ex
-pred = obj_fun(X)
 
-print pred
+# Get chunks
+chunk_index = 0
+test_chunk_size = 12
+upper_range = min(len(feat),(chunk_index+1)*test_chunk_size)
+X = np.asarray(feat[chunk_index * test_chunk_size:upper_range, :, :, :, :], dtype=np.float32)
+X = 4.0 * X - 1.0
+prob = obj_fun(X)
+
+print prob
 

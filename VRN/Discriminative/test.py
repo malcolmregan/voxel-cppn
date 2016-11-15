@@ -55,7 +55,9 @@ def make_testing_functions(cfg,model):
 
     # Get output
     y_hat_deterministic = lasagne.layers.get_output(l_out,X,deterministic=True)
- 
+
+    prob = T.sum(y_hat_deterministic,axis=0)
+
     # Average across rotation examples
     pred = T.argmax(T.sum(y_hat_deterministic,axis=0))
 
@@ -63,7 +65,7 @@ def make_testing_functions(cfg,model):
     classifier_test_error_rate = T.cast( T.mean( T.neq(pred, T.mean(y,dtype='int32'))), 'float32' )
 
     # Compile Functions 
-    test_error_fn = theano.function([batch_index], [classifier_test_error_rate,pred], givens={
+    test_error_fn = theano.function([batch_index], [classifier_test_error_rate,pred, prob], givens={
             X: X_shared[test_batch_slice],
             y:  T.cast( y_shared[test_batch_slice], 'int32')      
         })    
@@ -76,14 +78,16 @@ def make_testing_functions(cfg,model):
     return tfuncs, tvars, model
 
 # Main Function
-def main(args):
+def main():
+    config_path = 'C:/Users/p2admin/documents/max/projects/voxel-cppn/vrn/Discriminative/VRN.py'
+    data_path = 'C:/Users/p2admin/documents/max/projects/voxel-cppn/vrn/datasets/modelnet40_rot_test.npz'
 
     # Load config module
-    config_module = imp.load_source('config', args.config_path)
+    config_module = imp.load_source('config', config_path)
     cfg = config_module.cfg
    
     # Find weights file
-    weights_fname =str(args.config_path)[:-3]+'.npz'
+    weights_fname =str(config_path)[:-3]+'.npz'
 
     # Get Model
     model = config_module.get_model()
@@ -104,8 +108,8 @@ def main(args):
     itr = 0
     
     # Load testing data into memory
-    xt = np.asarray(np.load(args.data_path)['features'],dtype=np.float32)
-    yt = np.asarray(np.load(args.data_path)['targets'],dtype=np.float32)
+    xt = np.asarray(np.load(data_path)['features'],dtype=np.float32)
+    yt = np.asarray(np.load(data_path)['targets'],dtype=np.float32)
 
     # Get number of rotations to average across. If you want this to be different from
     # the number of rotations specified in the config file, make sure to change the 
@@ -160,7 +164,7 @@ def main(args):
             test_itr+=1
             
             # Test!
-            [batch_test_class_error,pred] = tfuncs['test_function'](bi)
+            [batch_test_class_error,pred,prob] = tfuncs['test_function'](bi)
             
             # Record test results
             test_class_error.append(batch_test_class_error)
@@ -185,9 +189,9 @@ def main(args):
 
 
 ### TODO: Clean this up and add the necessary arguments to enable all of the options we want.
-if __name__=='__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('config_path', type=Path, help='config .py file')
-    parser.add_argument('data_path',type =Path, default = 'datasets/modelnet40_rot_test.npz')
-    args = parser.parse_args()
-    main(args)
+# if __name__=='__main__':
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('config_path', type=Path, default= 'Discriminative/VRN.py', help='config .py file')
+#     parser.add_argument('data_path',type =Path, default = 'datasets/modelnet40_rot_test.npz')
+#     args = parser.parse_args()
+main()

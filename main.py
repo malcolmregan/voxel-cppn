@@ -56,7 +56,7 @@ obj_fun = make_testing_functions(model=model, category_id=0)
 
 # Prepare data
 # X = generate() ## CPPN
-X = np.random.randint(low=0, high=1, size=(1,1,32,32,32)).astype('float32')*3.0-1.0
+X = np.random.randint(low=0, high=1, size=(1,1,32,32,32)).astype('float32')*4.0-1.0
 
 pred = obj_fun(X)
 
