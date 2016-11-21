@@ -4,7 +4,7 @@ reproduction_type    = DefaultReproduction
 
 [phenotype]
 input_nodes          = 3		
-hidden_nodes         = 2
+hidden_nodes         = 10
 output_nodes         = 32768
 initial_connection   = partial 0.001	
 max_weight           = 30		
