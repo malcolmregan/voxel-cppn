@@ -3,18 +3,18 @@ stagnation_type      = DefaultStagnation
 reproduction_type    = DefaultReproduction
 
 [phenotype]
-input_nodes          = 3		
-hidden_nodes         = 10
+input_nodes          = 512		
+hidden_nodes         = 2
 output_nodes         = 32768
-initial_connection   = partial 0.001	
+initial_connection   = partial 0.0001	
 max_weight           = 30		
 min_weight           = -30
 feedforward          = 1
-activation_functions = gauss sigmoid sin tanh
+activation_functions = gauss sin 
 weight_stdev         = 1.0
 
 [genetic]
-pop_size                = 100
+pop_size                = 3
 max_fitness_threshold   = 1
 prob_add_conn           = 0.988
 prob_add_node           = 0.885
