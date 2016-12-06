@@ -10,4 +10,14 @@ def plotarray(array):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(x, y, z)
+    
+    axes = plt.gca()
+    axes.set_xlim([0,32])
+    axes.set_ylim([0,32])
+    axes.set_zlim([0,32])
+
+    ax.set_xlabel('input[0]')
+    ax.set_ylabel('input[1]')
+    ax.set_zlabel('input[2]')
+
     plt.show()
