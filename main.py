@@ -1,13 +1,14 @@
 from __future__ import print_function
-
 from objplot import plotarray
 import numpy as np
 import theano
 import theano.tensor as T
 import theano.sandbox.cuda.basic_ops as sbcuda
 import lasagne
+
 import sys
 import os
+
 from neat import nn, population, statistics
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -60,33 +61,31 @@ for i in range(0, 32):
             inp[n]=(i,j,k)
             n=n+1
 
-expected=[10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-
+def get_fitness(g, inp, CLASS):
+    net = nn.create_feed_forward_phenotype(g)
+    outputarray = [0]*32*32*32
+    for inputs in inp:
+        output = net.serial_activate(inputs)
+        outputarray[inputs[0]+inputs[1]*32+inputs[2]*32*32] = output[0]
+    outputarray = np.reshape(outputarray,(32,32,32))
+    # I haven't come up with a better way to make the matrix consist entirely of -1's and 3's yet
+    threshold=.5
+    outputarray[outputarray<threshold]=-1
+    outputarray[outputarray>=threshold]=3
+    temp = np.ones((1,1,32,32,32),dtype=np.float32)
+    temp[0,0,:,:,:] = outputarray
+    pred = obj_fun(temp)
+    fitness = 1-np.square(np.square(10-pred[0][CLASS])+np.sum(np.absolute(np.delete(pred[0],CLASS,0))))
+    if fitness>-2000:
+        print(pred[0])
+        plotarray(outputarray)
+    return fitness
+    
 def eval_fitness(genomes):
     for g in genomes:
-    net = nn.create_feed_forward_phenotype(g)
-	outputarray=[0]*32*32*32
-        for inputs in inp:
-            output = net.serial_activate(inputs)
-            outputarray[inputs[0]+inputs[1]*32+inputs[2]*32*32] = output[0]
-        outputarray = np.reshape(outputarray,(32,32,32))
-        threshold=.5
-        outputarray[outputarray<threshold]=-1.
-        outputarray[outputarray>=threshold]=3.
-        temp = np.ones((1,1,32,32,32),dtype=np.float32)
-        temp[0,0,:,:,:] = outputarray
-        temp=temp.astype('float32') 
-        pred=obj_fun(temp)
-        # Completely filled grids have relatively good fitness because they get everything close to zero.
-        # The if statement below is to prevent completely filled grids from dominating the gene pool.
-        if np.std(outputarray)>1.6:                                          
-            g.fitness = 1-np.square(np.square(expected[0]-pred[0][0])+np.sum(np.absolute(pred[0][1:-1])))
-        else:
-            g.fitness = -1000000000
-        #if g.fitness>-10000:
-        #    print(pred[0])
-        #    plotarray(outputarray)
-        
+       g.fitness = get_fitness(g, inp, 0)
+      
+
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
 pop = population.Population(config_path)

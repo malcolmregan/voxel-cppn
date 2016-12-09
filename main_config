@@ -14,7 +14,7 @@ activation_functions = sin tanh inv hat
 weight_stdev         = 1.0
 
 [genetic]
-pop_size                = 150
+pop_size                = 20
 max_fitness_threshold   = 0.95
 prob_add_conn           = 0.988
 prob_add_node           = 0.085
@@ -42,5 +42,5 @@ species_fitness_func = mean
 max_stagnation       = 100
 
 [DefaultReproduction]
-elitism              = 0
+elitism              = 1
 survival_threshold   = 1
