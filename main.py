@@ -1,33 +1,20 @@
 from __future__ import print_function
-import random
-import argparse
-import imp
-import time
-import logging
-import math
-import os
+
 from objplot import plotarray
 import numpy as np
-from path import Path
 import theano
 import theano.tensor as T
 import theano.sandbox.cuda.basic_ops as sbcuda
 import lasagne
-
 import sys
 import os
-
 from neat import nn, population, statistics
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.join(sys.path[0],'VRN'))
 
 from utils import checkpoints
-from utils import metrics_logging
 import imp
-
-from collections import OrderedDict
-import matplotlib
 
 np.set_printoptions(threshold=np.nan)
 
@@ -59,6 +46,7 @@ model = config_module.get_model()
 # Load weights
 metadata = checkpoints.load_weights(weights_fname, model['l_out']) # model weights changed after this...inside load_weights, another model file is read from weights_fname
 
+
 # Compile functions
 print('Compiling theano functions...')
 obj_fun = make_testing_functions()
@@ -77,28 +65,29 @@ expected=[10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 def eval_fitness(genomes):
     for g in genomes:
     net = nn.create_feed_forward_phenotype(g)
-    outputarray=[0]*32*32*32
+	outputarray=[0]*32*32*32
         for inputs in inp:
             output = net.serial_activate(inputs)
-            outputarray[inputs[0]+inputs[1]*32+inputs[2]*32*32] = output[0]#*((-1)**(inputs[0]+inputs[1]+inputs[2]))
+            outputarray[inputs[0]+inputs[1]*32+inputs[2]*32*32] = output[0]
         outputarray = np.reshape(outputarray,(32,32,32))
-        threshold=0
+        threshold=.5
         outputarray[outputarray<threshold]=-1.
         outputarray[outputarray>=threshold]=3.
-        temp = np.zeros((1,1,32,32,32),dtype=np.uint8)
+        temp = np.ones((1,1,32,32,32),dtype=np.float32)
         temp[0,0,:,:,:] = outputarray
         temp=temp.astype('float32') 
         pred=obj_fun(temp)
-        g.fitness = 1-(sum(pred[0]-expected))**2
-        #plotarray(outputarray)
+        # Completely filled grids have relatively good fitness because they get everything close to zero.
+        # The if statement below is to prevent completely filled grids from dominating the gene pool.
+        if np.std(outputarray)>1.6:                                          
+            g.fitness = 1-np.square(np.square(expected[0]-pred[0][0])+np.sum(np.absolute(pred[0][1:-1])))
+        else:
+            g.fitness = -1000000000
+        if g.fitness>-50000:
+            print(pred[0])
+            plotarray(outputarray)        
         
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
 pop = population.Population(config_path)
-pop.run(eval_fitness, 100)
-
-print('Number of evaluations: {0}'.format(pop.total_evaluations))
-
-# Display the most fit genome.
-#winner = pop.statistics.best_genome()
-#print('\nBest genome:\n{!s}'.format(winner))
+pop.run(eval_fitness, 10000)
