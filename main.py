@@ -83,9 +83,9 @@ def eval_fitness(genomes):
             g.fitness = 1-np.square(np.square(expected[0]-pred[0][0])+np.sum(np.absolute(pred[0][1:-1])))
         else:
             g.fitness = -1000000000
-        if g.fitness>-50000:
-            print(pred[0])
-            plotarray(outputarray)        
+        #if g.fitness>-10000:
+        #    print(pred[0])
+        #    plotarray(outputarray)
         
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
