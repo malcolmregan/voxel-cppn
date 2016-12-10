@@ -81,7 +81,7 @@ def get_fitness(g, inp, CLASS):
         print(pred[0])
         print('Saving...')
         filename = "class_{0}.npz".format(CLASS)
-        np.savez(os.path.join(datapath,filename),**{'features': temp, 'targets': np.asarray([CLASS], dtype=np.uint8)})
+        np.savez(os.path.join(data_path,filename),**{'features': temp, 'targets': np.asarray([CLASS], dtype=np.uint8)})
         plotarray(outputarray)
     return fitness
     
