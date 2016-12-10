@@ -37,7 +37,7 @@ def make_testing_functions():
 # Load config module
 basepath=str(os.path.dirname(os.path.realpath(__file__)))
 configure_path = basepath+'/VRN/Discriminative/VRN.py'
-data_path = basepath+'/VRN/datasets/modelnet40_rot_test.npz'
+data_path = basepath+'/VRN/datasets/CPPNGenerated'
 config_module = imp.load_source('config', configure_path)
 cfg = config_module.cfg
 # Find weights file
@@ -53,6 +53,7 @@ print('Compiling theano functions...')
 obj_fun = make_testing_functions()
 
 #CPPN
+
 inp=[0]*(32*32*32)
 n=0
 for i in range(0, 32):
@@ -72,20 +73,22 @@ def get_fitness(g, inp, CLASS):
     threshold=.5
     outputarray[outputarray<threshold]=-1
     outputarray[outputarray>=threshold]=3
-    temp = np.ones((1,1,32,32,32),dtype=np.float32)
+    temp = np.zeros((1,1,32,32,32),dtype=np.float32)
     temp[0,0,:,:,:] = outputarray
     pred = obj_fun(temp)
     fitness = 1-np.square(np.square(10-pred[0][CLASS])+np.sum(np.absolute(np.delete(pred[0],CLASS,0))))
-    if fitness>-2000:
+    if fitness>-1800:
         print(pred[0])
+        print('Saving...')
+        filename = "class_{0}.npz".format(CLASS)
+        np.savez(os.path.join(datapath,filename),**{'features': temp, 'targets': np.asarray([CLASS], dtype=np.uint8)})
         plotarray(outputarray)
     return fitness
     
 def eval_fitness(genomes):
     for g in genomes:
-       g.fitness = get_fitness(g, inp, 0)
+       g.fitness = get_fitness(g, inp, 1)
       
-
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
 pop = population.Population(config_path)
