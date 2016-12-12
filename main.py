@@ -53,7 +53,6 @@ print('Compiling theano functions...')
 obj_fun = make_testing_functions()
 
 #CPPN
-
 inp=[0]*(32*32*32)
 n=0
 for i in range(0, 32):
@@ -76,18 +75,19 @@ def get_fitness(g, inp, CLASS):
     temp = np.zeros((1,1,32,32,32),dtype=np.float32)
     temp[0,0,:,:,:] = outputarray
     pred = obj_fun(temp)
-    fitness = 1-np.square(np.square(10-pred[0][CLASS])+np.sum(np.absolute(np.delete(pred[0],CLASS,0))))
-    if fitness>-1800:
+    fitness = 1 - np.square(np.square(10 - pred[0][CLASS]) + np.sum(np.absolute(np.delete(pred[0], CLASS, 0))))
+    if ((fitness > -2000) and (os.path.isfile(os.path.join(data_path, "class_{0}_fitness_{1}.npz".format(CLASS, fitness))) == False)):
         print(pred[0])
-        print('Saving...')
-        filename = "class_{0}.npz".format(CLASS)
-        np.savez(os.path.join(data_path,filename),**{'features': temp, 'targets': np.asarray([CLASS], dtype=np.uint8)})
-        plotarray(outputarray)
+        filename = "class_{0}_fitness_{1}.npz".format(CLASS, fitness)
+        np.savez(os.path.join(data_path, filename), **{'features': temp, 'targets': [CLASS]})
+        print("Saved {0}".format(filename))
+        # plotarray(outputarray)
     return fitness
-    
+
+
 def eval_fitness(genomes):
     for g in genomes:
-       g.fitness = get_fitness(g, inp, 1)
+       g.fitness = get_fitness(g, inp, 0)
       
 local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'main_config')
