@@ -1,5 +1,5 @@
 from __future__ import print_function
-from objplot import plotarray
+from objplot import plotsave
 import numpy as np
 import theano
 import theano.tensor as T
@@ -68,20 +68,26 @@ def get_fitness(g, inp, CLASS):
         output = net.serial_activate(inputs)
         outputarray[inputs[0]+inputs[1]*32+inputs[2]*32*32] = output[0]
     outputarray = np.reshape(outputarray,(32,32,32))
-    # I haven't come up with a better way to make the matrix consist entirely of -1's and 3's yet
     threshold=.5
     outputarray[outputarray<threshold]=-1
     outputarray[outputarray>=threshold]=3
     temp = np.zeros((1,1,32,32,32),dtype=np.float32)
     temp[0,0,:,:,:] = outputarray
     pred = obj_fun(temp)
-    fitness = 1 - np.square(np.square(10 - pred[0][CLASS]) + np.sum(np.absolute(np.delete(pred[0], CLASS, 0))))
-    if ((fitness > -2000) and (os.path.isfile(os.path.join(data_path, "class_{0}_fitness_{1}.npz".format(CLASS, fitness))) == False)):
-        print(pred[0])
-        filename = "class_{0}_fitness_{1}.npz".format(CLASS, fitness)
-        np.savez(os.path.join(data_path, filename), **{'features': temp, 'targets': [CLASS]})
-        print("Saved {0}".format(filename))
-        # plotarray(outputarray)
+    pred = pred[0]
+    pred[:CLASS]=np.absolute(pred[:CLASS])          #make all but CLASS positive (yes? no?)
+    pred[(CLASS+1):]=np.absolute(pred[(CLASS+1):])  #???
+    fitness = (pred[CLASS]-min(pred))/(np.sum(pred-min(pred)))
+    if ((fitness>.2) and (os.path.isfile(os.path.join(data_path, "class_{0}_fitness_{1:.4f}".format(CLASS, fitness))))==False):
+        filename = "class{0}_fitness{1:.4f}".format(CLASS, fitness)
+        #Save data
+        np.savez(os.path.join(data_path,filename+'.npz'),**{'features': temp, 'targets': [CLASS]})
+        #Save object image
+        plotsave(outputarray,os.path.join(data_path,filename+'.png'))
+        #Save Prediction array as text file
+        file = open(os.path.join(data_path,filename+'.txt'),'w')
+        np.savetxt(file, pred)
+        file.close
     return fitness
 
 
